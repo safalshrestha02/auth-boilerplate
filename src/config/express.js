@@ -1,9 +1,9 @@
 const express = require("express");
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const compress = require('compression');
-const cors = require('cors');
-const helmet = require('helmet');
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+const compress = require("compression");
+const cors = require("cors");
+const helmet = require("helmet");
 const routes = require("../routes/v1");
 
 const app = express();
@@ -13,7 +13,7 @@ const PORT = process.env.PORT;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// parses cookies 
+// parses cookies
 app.use(cookieParser());
 //checks if compression is needed in response bodies
 app.use(compress());
@@ -27,7 +27,14 @@ app.use(cors());
 // mounting all available api based on version
 app.use("/api", routes);
 
-app.get("/", (req, res) => res.send("Welcome to the Server"));
+//google connect
+const googleConnect = require("../utils/dummyutils.js");
+
+app.get("/", (req, res) =>
+  res.send(
+    `connected to server</p><button><a href = ${googleConnect()}>Login with google</a></button>`
+  )
+);
 
 app.listen(PORT, () => console.log(`Server running at ${PORT}`));
 

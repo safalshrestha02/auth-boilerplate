@@ -59,4 +59,16 @@ async function getAllUser(req, res, next) {
     next(error);
   }
 }
-module.exports = { registerUser, getAllUser, loginUser };
+
+async function apiPage() {
+  try {
+    //this is redirection from the google
+    //we need to get code (id and access token) from the query on our redirect URI
+    const code = req.query.code.toString();
+    //get user with token
+    //upsert user and create session and tokens and also set cookie for the user
+  } catch (error) {
+    next(error);
+  }
+}
+module.exports = { registerUser, getAllUser, loginUser, apiPage };
