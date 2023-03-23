@@ -1,4 +1,6 @@
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+require("dotenv").config;
 
 async function registerUser(req, res, next) {
   try {
@@ -9,7 +11,7 @@ async function registerUser(req, res, next) {
       name,
       email,
       password,
-      role
+      role,
     });
 
     if (user) {
@@ -35,15 +37,24 @@ async function loginUser(req, res, next) {
     if (!user) {
       res.status(401).json({ error: "invalid credentials" });
     }
-
+    const accessToken = jwt.sign(
+      user._id.toJSON(),
+      process.env.ACCESS_TOKEN_SECRET
+    );
     // Check if password matches
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
       res.status(401).json({ error: "invalid credentials" });
     } else {
-      res.json({ user: user });
+      res
+        .cookie("jwt", accessToken, {
+          httpOnly: true,
+          expiresIn: "1d",
+        })
+        .json({ user: user });
     }
+    console.log(accessToken);
   } catch (error) {
     next(error);
   }
@@ -72,4 +83,14 @@ async function apiPage() {
     next(error);
   }
 }
-module.exports = { registerUser, getAllUser, loginUser, apiPage };
+
+activeUser = async (req, res, next) => {
+  try {
+    console.log(req.user)
+    const user = await User.findById(req.user.id).exec()
+    res.status(200).json({ data: user });
+  } catch (error) {
+    return error;
+  }
+};
+module.exports = { registerUser, getAllUser, loginUser, apiPage, activeUser };
