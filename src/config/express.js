@@ -28,7 +28,7 @@ app.use(cors());
 app.use("/api", routes);
 
 //google connect
-const googleConnect = require("../utils/dummyutils.js");
+const googleConnect = require("../utils/loginWithGoogle.js");
 
 app.get("/", (req, res) =>
   res.send(
