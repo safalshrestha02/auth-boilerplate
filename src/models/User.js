@@ -11,12 +11,17 @@ const Register = new mongoose.Schema({
     type: String,
     required: [true, "Please enter your email"],
     unique: true,
-    validate : [isEmail, "Please enter a valid email"]
+    validate: [isEmail, "Please enter a valid email"],
   },
   password: {
     type: String,
     required: [true, "Please enter your password"],
     minlength: [6, "Password must be atlease 6 characters long"],
+  },
+  role: {
+    type: String,
+    enum: ["Super Admin", "Admin", "User"],
+    default: "User",
   },
   createdAt: {
     type: Date,
