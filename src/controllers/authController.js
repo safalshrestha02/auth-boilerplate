@@ -10,7 +10,6 @@ require("dotenv").config;
 async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
-    let refreshTokens = {};
     // Validate email and password
     if (!email || !password) {
       res.json({ error: "enter your credentials" });
@@ -18,29 +17,44 @@ async function loginUser(req, res, next) {
 
     // Check for the user
     const user = await User.findOne({ email: email }).select("+password");
-    const id = user._id.toJSON();
+
     if (!user) {
       res.status(401).json({ error: "invalid credentials" });
     }
-    const accessToken = jwt.sign(id, process.env.ACCESS_TOKEN_SECRET);
-    const refreshToken = jwt.sign(id, process.env.REFRESH_TOKEN_SECRET);
+
     // Check if password matches
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       res.status(401).json({ error: "invalid credentials" });
-    } else {
-      await User.findByIdAndUpdate(
-        { _id: id },
-        { $set: { refreshToken } },
-        { new: true }
-      );
-      res
-        .cookie("jwt", accessToken, {
-          httpOnly: true,
-          expiresIn: "1d",
-        })
-        .json({ user });
     }
+
+    const accessToken = jwt.sign(
+      {
+        UserInfo: {
+          id: user.id,
+          roles: user.roles,
+        },
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "1m" }
+    );
+
+    const refreshToken = jwt.sign(
+      { email: user.id },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Create secure cookie with refresh token
+    res.cookie("jwt", refreshToken, {
+      httpOnly: true, //accessible only by web server
+      secure: true, //https
+      sameSite: "None", //cross-site cookie
+      maxAge: 7 * 24 * 60 * 60 * 1000, //cookie expiry: set to match rT
+    });
+
+    // Send accessToken containing username and roles
+    res.json({ accessToken });
   } catch (error) {
     next(error);
   }
@@ -48,8 +62,41 @@ async function loginUser(req, res, next) {
 
 // @desc Get Active User
 // @route POST /api/v1/auth/activeUser
-// @access Private
-async function refresh(req, res, next) {}
+// @access Public
+async function refresh(req, res, next) {
+  const cookies = req.cookies;
+
+  if (!cookies?.jwt) return res.status(401).json({ message: "Unauthorized" });
+
+  const refreshToken = cookies.jwt;
+
+  jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET,
+    async (err, decoded) => {
+      if (err) return res.status(403).json({ message: "Forbidden" });
+
+      const user = await User.findOne({
+        id: decoded.id,
+      }).exec();
+
+      if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+      const accessToken = jwt.sign(
+        {
+          UserInfo: {
+            id: user.id,
+            roles: user.role,
+          },
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "15m" }
+      );
+
+      res.json({ accessToken });
+    }
+  );
+}
 
 // @desc Get All User
 // @route POST /api/v1/auth/getAllUsers
@@ -94,7 +141,19 @@ async function activeUser(req, res, next) {
   }
 }
 
-async function logout(req, res, next) {}
+// @desc Get Active User
+// @route POST /api/v1/auth/logout
+// @access Public
+async function logout(req, res, next) {
+  const cookies = req.cookies;
+  if (!cookies?.jwt) return res.sendStatus(204); //No content
+  res.clearCookie("jwt", {
+    //httpOnly: true,
+    sameSite: "None",
+    secure: true,
+  });
+  res.json({ message: "Cookie cleared" });
+}
 
 module.exports = {
   getAllUser,
