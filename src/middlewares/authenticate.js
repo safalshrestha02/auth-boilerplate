@@ -1,34 +1,21 @@
 require("dotenv").config;
 const jwt = require("jsonwebtoken");
-const User = require('../models/User')
 
-authenticateToken = async (req, res, next) => {
-        try {
-          let token;
-      
-          if (
-            req.headers.authorization &&
-            req.headers.authorization.startsWith("Bearer")
-          ) {
-            token = req.headers.authorization.split(" ")[1];
-          } else if (req.cookies.jwt) {
-            token = req.cookies.jwt;
-          }
-      
-          if (!token) {
-            return res.json({data:" req.user"})
-          }
-      
-          try {
-            const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-            req.user = await User.findById(decoded);
-            next();
-          } catch (error) {
-            return res.json({data: req.user})
-          }
-        } catch (error) {
-          next(error);
-        }
-      };
+const authenticateToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ message: "Forbidden" });
+    req.id = decoded.UserInfo.id;
+    req.role = decoded.UserInfo.role;
+    next();
+  });
+};
 
 module.exports = { authenticateToken };

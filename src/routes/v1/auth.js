@@ -6,6 +6,7 @@ const {
   refresh,
   apiPage,
   activeUser,
+  logout,
 } = require("../../controllers/authController");
 
 const { registerUser } = require("../../controllers/userController");
@@ -18,6 +19,6 @@ router.get("/refresh", refresh);
 router.get("/getAllUsers", getAllUser);
 router.get("/api", apiPage);
 router.get("/activeUser", authenticateToken, activeUser);
-router.patch("/logout", logout);
+router.post("/logout", logout);
 
 module.exports = router;
