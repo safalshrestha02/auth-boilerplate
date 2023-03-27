@@ -1,5 +1,6 @@
 const allowedOrigins = require("./allowedOrigins");
 
+// middleware to allow your localhost and domains
 const corsOption = {
   origin: (origin, callback) => {
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {

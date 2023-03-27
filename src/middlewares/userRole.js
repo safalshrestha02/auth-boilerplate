@@ -1,6 +1,4 @@
-// dummydummy
-const User = require("../models/User");
-
+// checks all the roles and its permissions
 exports.checkUserRole = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {

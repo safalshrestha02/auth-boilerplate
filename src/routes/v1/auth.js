@@ -16,7 +16,7 @@ const router = Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/refresh", refresh);
-router.get("/getAllUsers", getAllUser);
+router.get("/getAllUsers", authenticateToken, getAllUser);
 router.get("/api", apiPage);
 router.get("/activeUser", authenticateToken, activeUser);
 router.post("/logout", logout);

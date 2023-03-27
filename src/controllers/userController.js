@@ -20,7 +20,7 @@ async function registerUser(req, res, next) {
 
     if (user) {
       res.status(201).json({ success: true, user: user });
-    }q
+    }
   } catch (error) {
     next(error);
   }
