@@ -4,7 +4,7 @@ require("dotenv").config;
 
 async function registerUser(req, res, next) {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, refreshToken } = req.body;
 
     // Create user
     const user = await User.create({
@@ -12,6 +12,7 @@ async function registerUser(req, res, next) {
       email,
       password,
       role,
+      refreshToken,
     });
 
     if (user) {
@@ -25,7 +26,7 @@ async function registerUser(req, res, next) {
 async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
-
+    let refreshTokens = {};
     // Validate email and password
     if (!email || !password) {
       res.json({ error: "enter your credentials" });
@@ -33,28 +34,29 @@ async function loginUser(req, res, next) {
 
     // Check for the user
     const user = await User.findOne({ email: email }).select("+password");
-
+    const id = user._id.toJSON();
     if (!user) {
       res.status(401).json({ error: "invalid credentials" });
     }
-    const accessToken = jwt.sign(
-      user._id.toJSON(),
-      process.env.ACCESS_TOKEN_SECRET
-    );
+    const accessToken = jwt.sign(id, process.env.ACCESS_TOKEN_SECRET);
+    const refreshToken = jwt.sign(id, process.env.REFRESH_TOKEN_SECRET);
     // Check if password matches
     const isMatch = await user.matchPassword(password);
-
     if (!isMatch) {
       res.status(401).json({ error: "invalid credentials" });
     } else {
+      await User.findByIdAndUpdate(
+        { _id: id },
+        { $set: { refreshToken } },
+        { new: true }
+      );
       res
         .cookie("jwt", accessToken, {
           httpOnly: true,
           expiresIn: "1d",
         })
-        .json({ user: user });
+        .json({ user });
     }
-    console.log(accessToken);
   } catch (error) {
     next(error);
   }
@@ -86,11 +88,32 @@ async function apiPage() {
 
 activeUser = async (req, res, next) => {
   try {
-    console.log(req.user)
-    const user = await User.findById(req.user.id).exec()
+    console.log(req.user);
+    const user = await User.findById(req.user.id).exec();
     res.status(200).json({ data: user });
   } catch (error) {
     return error;
   }
 };
-module.exports = { registerUser, getAllUser, loginUser, apiPage, activeUser };
+
+logout = async (req, res) => {
+  try {
+    const userDetails = req.body.email;
+    const user = await User.findOneAndUpdate(
+      { email: userDetails },
+      { $set: { refreshToken: "" } },
+      { new: true }
+    );
+    res.cookie("jwt", { expiresIn: 1 }).json({ logout: "logged Out" });
+  } catch (error) {
+    next(error);
+  }
+};
+module.exports = {
+  registerUser,
+  getAllUser,
+  loginUser,
+  apiPage,
+  activeUser,
+  logout,
+};
