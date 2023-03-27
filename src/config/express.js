@@ -5,6 +5,9 @@ const compress = require("compression");
 const cors = require("cors");
 const helmet = require("helmet");
 const routes = require("../routes/v1");
+const { logger } = require("../middlewares/logger");
+const errorHandler = require("../middlewares/errorHandler");
+const corsOption = require("./corsOption");
 
 const app = express();
 const PORT = process.env.PORT;
@@ -13,6 +16,7 @@ const PORT = process.env.PORT;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(express.json());
 // parses cookies
 app.use(cookieParser());
 //checks if compression is needed in response bodies
@@ -21,8 +25,10 @@ app.use(compress());
 // secure apps by setting various HTTP headers
 app.use(helmet());
 
+app.use(logger);
+
 // enable CORS - Cross Origin Resource Sharing
-app.use(cors());
+app.use(cors(corsOption));
 
 // mounting all available api based on version
 app.use("/api", routes);
@@ -35,6 +41,8 @@ app.get("/", (req, res) =>
     `connected to server</p><button><a href = ${googleConnect()}>Login with google</a></button>`
   )
 );
+
+app.use(errorHandler);
 
 app.listen(PORT, () => console.log(`Server running at ${PORT}`));
 
