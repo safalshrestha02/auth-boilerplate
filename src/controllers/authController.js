@@ -2,27 +2,11 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 require("dotenv").config;
 
-async function registerUser(req, res, next) {
-  try {
-    const { name, email, password, role, refreshToken } = req.body;
+//Will contain all the authentication controllers like login, getActive user & logout
 
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role,
-      refreshToken,
-    });
-
-    if (user) {
-      res.status(201).json({ success: true, user: user });
-    }
-  } catch (error) {
-    next(error);
-  }
-}
-
+// @desc Login
+// @route POST /api/v1/auth/login
+// @access Public
 async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -62,6 +46,14 @@ async function loginUser(req, res, next) {
   }
 }
 
+// @desc Get Active User
+// @route POST /api/v1/auth/activeUser
+// @access Private
+async function refresh(req, res, next) {}
+
+// @desc Get All User
+// @route POST /api/v1/auth/getAllUsers
+// @access Private
 async function getAllUser(req, res, next) {
   try {
     const getAllUser = await User.find();
@@ -74,6 +66,9 @@ async function getAllUser(req, res, next) {
   }
 }
 
+// @desc Get Active User
+// @route POST /api/v1/auth/activeUser
+// @access Private
 async function apiPage() {
   try {
     //this is redirection from the google
@@ -86,33 +81,25 @@ async function apiPage() {
   }
 }
 
-activeUser = async (req, res, next) => {
+// @desc Get Active User
+// @route POST /api/v1/auth/activeUser
+// @access Private
+async function activeUser(req, res, next) {
   try {
     console.log(req.user);
     const user = await User.findById(req.user.id).exec();
     res.status(200).json({ data: user });
   } catch (error) {
-    return error;
-  }
-};
-
-logout = async (req, res) => {
-  try {
-    const userDetails = req.body.email;
-    const user = await User.findOneAndUpdate(
-      { email: userDetails },
-      { $set: { refreshToken: "" } },
-      { new: true }
-    );
-    res.cookie("jwt", { expiresIn: 1 }).json({ logout: "logged Out" });
-  } catch (error) {
     next(error);
   }
-};
+}
+
+async function logout(req, res, next) {}
+
 module.exports = {
-  registerUser,
   getAllUser,
   loginUser,
+  refresh,
   apiPage,
   activeUser,
   logout,

@@ -1,18 +1,20 @@
 const { Router } = require("express");
 const { authenticateToken } = require("../../middlewares/authenticate");
 const {
-  registerUser,
   getAllUser,
   loginUser,
+  refresh,
   apiPage,
   activeUser,
-  logout,
-} = require("../../controllers/auth");
+} = require("../../controllers/authController");
+
+const { registerUser } = require("../../controllers/userController");
 
 const router = Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.get("/refresh", refresh);
 router.get("/getAllUsers", getAllUser);
 router.get("/api", apiPage);
 router.get("/activeUser", authenticateToken, activeUser);
