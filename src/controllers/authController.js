@@ -134,7 +134,7 @@ async function apiPage() {
 async function activeUser(req, res, next) {
   try {
     console.log(req.user);
-    const user = await User.findById(req.user.id).exec();
+    const user = await User.findById(req.user).exec();
     res.status(200).json({ data: user });
   } catch (error) {
     next(error);

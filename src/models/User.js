@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { isEmail } = require("validator");
 const bcrypt = require("bcrypt");
 
+// database model
 const Register = new mongoose.Schema(
   {
     name: {
@@ -23,10 +24,6 @@ const Register = new mongoose.Schema(
       type: String,
       enum: ["Super Admin", "Admin", "User"],
       default: "User",
-    },
-    refreshToken: {
-      type: String,
-      expiresIn : "30days"
     },
     createdAt: {
       type: Date,

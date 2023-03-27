@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 mongoose.set("strictQuery", true);
 
+// connect your database
 const connectDB = async () => {
   try {
     mongoose.connect(process.env.MONGO_URL, {
