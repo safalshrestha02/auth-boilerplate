@@ -32,11 +32,11 @@ async function loginUser(req, res, next) {
       {
         UserInfo: {
           id: user.id,
-          roles: user.roles,
+          role: user.role,
         },
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1m" }
+      { expiresIn: "5m" }
     );
 
     const refreshToken = jwt.sign(

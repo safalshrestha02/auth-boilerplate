@@ -19,4 +19,19 @@ const authenticateToken = async (req, res, next) => {
   });
 };
 
-module.exports = { authenticateToken };
+// checks all the roles and its permissions
+const checkUserRole = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.role)) {
+      return next(
+        new Error(
+          `User role ${req.role} is unauthorized to access this route`,
+          403
+        )
+      );
+    }
+    next();
+  };
+};
+
+module.exports = { authenticateToken, checkUserRole };

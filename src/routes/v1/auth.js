@@ -1,5 +1,8 @@
 const { Router } = require("express");
-const { authenticateToken } = require("../../middlewares/authenticate");
+const {
+  authenticateToken,
+  checkUserRole,
+} = require("../../middlewares/authenticate");
 const {
   getAllUser,
   loginUser,
@@ -16,7 +19,12 @@ const router = Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/refresh", refresh);
-router.get("/getAllUsers", authenticateToken, getAllUser);
+router.get(
+  "/getAllUsers",
+  authenticateToken,
+  checkUserRole("Admin"),
+  getAllUser
+);
 router.get("/api", apiPage);
 router.get("/activeUser", authenticateToken, activeUser);
 router.post("/logout", logout);
