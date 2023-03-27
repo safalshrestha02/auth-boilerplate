@@ -1,6 +1,5 @@
 const User = require("../models/User");
 require("dotenv").config;
-
 // Will contain all the user controllers like Create, Edit, Delete
 
 // @desc Register
@@ -9,8 +8,13 @@ require("dotenv").config;
 async function registerUser(req, res, next) {
   try {
     const { name, email, password, role } = req.body;
+    const findingUser = await User.findOne({ email });
 
+    if (findingUser) {
+      throw new Error("Email is already Registered");
+    }
     // Create user
+
     const user = await User.create({
       name,
       email,
