@@ -1,8 +1,30 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 require("dotenv").config;
-
+const {
+  getGoogleOAuth,
+  getGoogleUser,
+  findAndUpdateUser,
+} = require("../services/googleService");
 //Will contain all the authentication controllers like login, getActive user & logout
+
+//cookie options
+const accessOptions = {
+  expiresIn: "15m",
+  httpOnly: true,
+  domain: "localhost",
+  path: "/",
+  secure: "false",
+  sameSite: "strict",
+};
+const refreshOptions = {
+  expiresIn: "30d",
+  httpOnly: true,
+  domain: "localhost",
+  path: "/",
+  secure: "false",
+  sameSite: "strict",
+};
 
 // @desc Login
 // @route POST /api/v1/auth/login
@@ -116,13 +138,62 @@ async function getAllUser(req, res, next) {
 // @desc Get Active User
 // @route POST /api/v1/auth/activeUser
 // @access Private
-async function apiPage() {
+async function googleOauthRedirect(req, res, next) {
   try {
     //this is redirection from the google
     //we need to get code (id and access token) from the query on our redirect URI
-    const code = req.query.code.toString();
+    const code = req.query.code;
     //get user with token
-    //upsert user and create session and tokens and also set cookie for the user
+    const googleAuthData = await getGoogleOAuth(code);
+    
+    const { id_token, access_token } = googleAuthData;
+
+    const googleUser = await getGoogleUser(id_token, access_token);
+
+    const email = googleUser.email;
+    if (!googleUser.verified_email) {
+      return res.status(403).send("google account is not verified");
+    }
+    const findEmail = await User.findOne({ email });
+    //upsert user
+    if (!findEmail) {
+      await User.create({
+        email,
+        name: googleUser.name,
+        picture: googleUser.picture,
+        role: "User",
+      });
+    }
+    //create session
+    const user = await User.findOneAndUpdate(
+      {
+        email,
+      },
+      { email, name: googleUser.name, picture: googleUser.picture },
+      { upsert: true, new: true }
+    );
+    const id = user._id;
+
+    //create tokens
+    const accessToken = jwt.sign(
+      { UserInfo: { id, role: user.role } },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+    const refreshToken = jwt.sign(
+      { email: id },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+    //set cookie for the user
+    res.cookie(
+      "accessToken",
+      accessToken,
+      accessOptions && "refreshToken",
+      refreshToken,
+      refreshOptions
+    )
+    .redirect('/');
   } catch (error) {
     next(error);
   }
@@ -133,7 +204,6 @@ async function apiPage() {
 // @access Private
 async function activeUser(req, res, next) {
   try {
-    console.log(req.user);
     const user = await User.findById(req.user).exec();
     res.status(200).json({ data: user });
   } catch (error) {
@@ -148,7 +218,7 @@ async function logout(req, res, next) {
   const cookies = req.cookies;
   if (!cookies?.jwt) return res.sendStatus(204); //No content
   res.clearCookie("jwt", {
-    //httpOnly: true,
+    httpOnly: true,
     sameSite: "None",
     secure: true,
   });
@@ -159,7 +229,7 @@ module.exports = {
   getAllUser,
   loginUser,
   refresh,
-  apiPage,
+  googleOauthRedirect,
   activeUser,
   logout,
 };

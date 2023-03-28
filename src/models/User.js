@@ -17,7 +17,7 @@ const Register = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Please enter your password"],
+      // required: [true, "Please enter your password"],
       minlength: [6, "Password must be atlease 6 characters long"],
     },
     role: {
@@ -25,6 +25,7 @@ const Register = new mongoose.Schema(
       enum: ["Super Admin", "Admin", "User"],
       default: "User",
     },
+    picture: String,
     createdAt: {
       type: Date,
       default: Date.now,

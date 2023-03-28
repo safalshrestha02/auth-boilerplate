@@ -7,7 +7,7 @@ const {
   getAllUser,
   loginUser,
   refresh,
-  apiPage,
+  googleOauthRedirect,
   activeUser,
   logout,
 } = require("../../controllers/authController");
@@ -26,6 +26,7 @@ router.get(
   getAllUser
 );
 router.get("/api", apiPage);
+router.get("/googleOauthRedirect", googleOauthRedirect);
 router.get("/activeUser", authenticateToken, activeUser);
 router.post("/logout", logout);
 
