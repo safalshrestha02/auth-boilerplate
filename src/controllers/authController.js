@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Token = require("../models/Token");
 const jwt = require("jsonwebtoken");
 require("dotenv").config;
 const {
@@ -29,6 +30,7 @@ const refreshOptions = {
 // @desc Login
 // @route POST /api/v1/auth/login
 // @access Public
+
 async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -44,10 +46,14 @@ async function loginUser(req, res, next) {
       res.status(401).json({ error: "invalid credentials" });
     }
 
-    // Check if password matches
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      res.status(401).json({ error: "invalid credentials" });
+    // Check if the email is verified or not and check if the password matches
+    if (user.isVerified === false) {
+      res.json("please verify yopur email first");
+    } else {
+      const isMatch = await user.matchPassword(password);
+      if (!isMatch) {
+        res.status(401).json({ error: "invalid credentials" });
+      }
     }
 
     const accessToken = jwt.sign(
@@ -62,7 +68,7 @@ async function loginUser(req, res, next) {
     );
 
     const refreshToken = jwt.sign(
-      { email: user.id },
+      { id: user.id },
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: "7d" }
     );
@@ -70,13 +76,13 @@ async function loginUser(req, res, next) {
     // Create secure cookie with refresh token
     res.cookie("jwt", refreshToken, {
       httpOnly: true, //accessible only by web server
-      secure: true, //https
+      //secure: true, //https
       sameSite: "None", //cross-site cookie
       maxAge: 7 * 24 * 60 * 60 * 1000, //cookie expiry: set to match rT
     });
 
     // Send accessToken containing username and roles
-    res.json({ accessToken });
+    res.json({ accessToken, user });
   } catch (error) {
     next(error);
   }
@@ -85,6 +91,7 @@ async function loginUser(req, res, next) {
 // @desc Get Active User
 // @route POST /api/v1/auth/activeUser
 // @access Public
+
 async function refresh(req, res, next) {
   const cookies = req.cookies;
 
@@ -120,9 +127,34 @@ async function refresh(req, res, next) {
   );
 }
 
+// @desc Verify Email
+// @route POST /api/v1/auth/verify/:id/:token
+// @access Public
+
+async function verifyEmail(req, res, next) {
+  try {
+    const user = await User.findOne({ _id: req.params.id });
+    if (!user) return res.status(400).send("Invalid link");
+
+    const token = await Token.findOne({
+      userId: user._id,
+      token: req.params.token,
+    });
+    if (!token) return res.status(400).send("Invalid link");
+
+    await User.updateOne({ _id: user._id, isVerified: true });
+    await Token.findByIdAndRemove(token._id);
+
+    res.send("email verified sucessfully");
+  } catch (error) {
+    res.status(400).send("An error occured");
+  }
+}
+
 // @desc Get All User
 // @route POST /api/v1/auth/getAllUsers
 // @access Private
+
 async function getAllUser(req, res, next) {
   try {
     const getAllUser = await User.find();
@@ -202,6 +234,7 @@ async function googleOauthRedirect(req, res, next) {
 // @desc Get Active User
 // @route POST /api/v1/auth/activeUser
 // @access Private
+
 async function activeUser(req, res, next) {
   try {
     const user = await User.findById(req.user).exec();
@@ -214,6 +247,7 @@ async function activeUser(req, res, next) {
 // @desc Get Active User
 // @route POST /api/v1/auth/logout
 // @access Public
+
 async function logout(req, res, next) {
   const cookies = req.cookies;
   if (!cookies?.jwt) return res.sendStatus(204); //No content
@@ -229,6 +263,7 @@ module.exports = {
   getAllUser,
   loginUser,
   refresh,
+  verifyEmail,
   googleOauthRedirect,
   activeUser,
   logout,
