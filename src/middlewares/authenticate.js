@@ -1,6 +1,7 @@
 require("dotenv").config;
 const jwt = require("jsonwebtoken");
 
+//checks jwt token in header
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.Authorization; // checks the authoraization header
 
@@ -19,7 +20,7 @@ const authenticateToken = async (req, res, next) => {
   });
 };
 
-// checks all the roles and its permissions
+// checks all the role of the user
 const checkUserRole = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.role)) {

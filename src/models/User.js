@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 const { isEmail } = require("validator");
 const bcrypt = require("bcrypt");
 
-// database model
-const Register = new mongoose.Schema(
+// User database model
+const User = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -30,12 +30,16 @@ const Register = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
 //encrypt password using bcrypt
-Register.pre("save", async function (next) {
+User.pre("save", async function (next) {
   if (!this.isModified("password")) {
     next();
   }
@@ -46,8 +50,8 @@ Register.pre("save", async function (next) {
 });
 
 // Match user entered password to hashed password in database
-Register.methods.matchPassword = async function (enteredPassword) {
+User.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model("User", Register);
+module.exports = mongoose.model("User", User);

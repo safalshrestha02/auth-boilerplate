@@ -17,8 +17,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.json());
+
 // parses cookies
 app.use(cookieParser());
+
 //checks if compression is needed in response bodies
 app.use(compress());
 

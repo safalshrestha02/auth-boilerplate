@@ -8,24 +8,25 @@ const {
   loginUser,
   refresh,
   googleOauthRedirect,
+  verifyEmail,
   activeUser,
   logout,
 } = require("../../controllers/authController");
 
-const { registerUser } = require("../../controllers/userController");
+const { createUser } = require("../../controllers/userController");
 
 const router = Router();
 
-router.post("/register", registerUser);
+router.post("/register", createUser);
 router.post("/login", loginUser);
 router.get("/refresh", refresh);
+router.get("/verify/:id/:token", verifyEmail);
 router.get(
   "/getAllUsers",
   authenticateToken,
   checkUserRole("Admin"),
   getAllUser
 );
-router.get("/api", apiPage);
 router.get("/googleOauthRedirect", googleOauthRedirect);
 router.get("/activeUser", authenticateToken, activeUser);
 router.post("/logout", logout);
