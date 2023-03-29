@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const Token = require("../models/Token");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const sendEmail = require("../services/sendMail");
 require("dotenv").config;
 const {
   getGoogleOAuth,
@@ -147,7 +149,42 @@ async function verifyEmail(req, res, next) {
 
     res.send("email verified sucessfully");
   } catch (error) {
-    res.status(400).send("An error occured");
+    next(error);
+  }
+}
+
+// @desc Resend Verification Email
+// @route POST /api/v1/auth/resendVerificationEmail
+// @access Public
+
+async function resendVerificationEmail(req, res, next) {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      res.status(400).send("User doesnot exists");
+    }
+    if (user.isVerified === true) {
+      res.status(400).send("User already exists");
+    } else {
+      const emailToken = jwt.sign(
+        { secret: user.email },
+        process.env.SMTP_SECRET,
+        { expiresIn: "1m" }
+      );
+
+      let token = await new Token({
+        userId: user._id,
+        token: emailToken,
+      }).save();
+
+      const message = `Please click on the link below to verify your email\n${process.env.DOMAIN}/auth/verify/${user.id}/${token.token}`;
+      await sendEmail(user.email, "Verify Email", message);
+      res.send(
+        "A link has been sent to your account, please click on that link to verify your email"
+      );
+    }
+  } catch (error) {
+    next(error);
   }
 }
 
@@ -170,6 +207,7 @@ async function getAllUser(req, res, next) {
 // @desc Get Active User
 // @route POST /api/v1/auth/activeUser
 // @access Private
+
 async function googleOauthRedirect(req, res, next) {
   try {
     //this is redirection from the google
@@ -177,7 +215,7 @@ async function googleOauthRedirect(req, res, next) {
     const code = req.query.code;
     //get user with token
     const googleAuthData = await getGoogleOAuth(code);
-    
+
     const { id_token, access_token } = googleAuthData;
 
     const googleUser = await getGoogleUser(id_token, access_token);
@@ -218,14 +256,15 @@ async function googleOauthRedirect(req, res, next) {
       { expiresIn: "7d" }
     );
     //set cookie for the user
-    res.cookie(
-      "accessToken",
-      accessToken,
-      accessOptions && "refreshToken",
-      refreshToken,
-      refreshOptions
-    )
-    .redirect('/');
+    res
+      .cookie(
+        "accessToken",
+        accessToken,
+        accessOptions && "refreshToken",
+        refreshToken,
+        refreshOptions
+      )
+      .redirect("/");
   } catch (error) {
     next(error);
   }
@@ -264,6 +303,7 @@ module.exports = {
   loginUser,
   refresh,
   verifyEmail,
+  resendVerificationEmail,
   googleOauthRedirect,
   activeUser,
   logout,

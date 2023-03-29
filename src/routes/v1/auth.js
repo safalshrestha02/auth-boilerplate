@@ -3,12 +3,14 @@ const {
   authenticateToken,
   checkUserRole,
 } = require("../../middlewares/authenticate");
+// const { verifyEmailToken } = require("../../middlewares/verifyToken");
 const {
   getAllUser,
   loginUser,
   refresh,
   googleOauthRedirect,
   verifyEmail,
+  resendVerificationEmail,
   activeUser,
   logout,
 } = require("../../controllers/authController");
@@ -20,7 +22,12 @@ const router = Router();
 router.post("/register", createUser);
 router.post("/login", loginUser);
 router.get("/refresh", refresh);
-router.get("/verify/:id/:token", verifyEmail);
+router.get(
+  "/verify/:id/:token",
+  // verifyEmailToken,
+  verifyEmail
+);
+router.post("/resendEmail", resendVerificationEmail);
 router.get(
   "/getAllUsers",
   authenticateToken,

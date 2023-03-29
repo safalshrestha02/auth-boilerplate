@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const Token = require("../models/Token");
-const { generateToken } = require("../utils/generateToken");
+const jwt = require("jsonwebtoken");
 const sendEmail = require("../services/sendMail");
 const crypto = require("crypto");
 require("dotenv").config;
@@ -26,12 +26,21 @@ async function createUser(req, res, next) {
       role,
     });
 
+    const emailToken = jwt.sign(
+      { secret: user.email },
+      process.env.SMTP_SECRET,
+      {
+        expiresIn: "1m",
+      }
+    );
+
     let token = await new Token({
       userId: user._id,
-      token: crypto.randomBytes(64).toString("hex"),
+      token: emailToken,
+      createdAt: Date.now(),
     }).save();
 
-    const message = `${process.env.DOMAIN}/auth/verify/${user.id}/${token.token}`;
+    const message = `Please click on the link below to verify your email\n${process.env.DOMAIN}/auth/verify/${user.id}/${token.token}`;
     await sendEmail(user.email, "Verify Email", message);
     res.send(
       "A link has been sent to your account, please click on that link to verify your email"
