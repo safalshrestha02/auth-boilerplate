@@ -6,6 +6,7 @@ const errorHandler = (err, req, res, next) => {
     `${err.name}\t${err.message}\t${req.method}\t${req.url}\t${req.headers.origin}`,
     "errorLog.log"
   );
+  
   console.log(err.stack);
 
   const status = req.statusCode ? res.statusCode : 500; //server error

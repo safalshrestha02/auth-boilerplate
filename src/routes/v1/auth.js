@@ -9,6 +9,7 @@ const {
   refresh,
   googleOauthRedirect,
   verifyEmail,
+  resendVerificationEmail,
   activeUser,
   logout,
 } = require("../../controllers/authController");
@@ -21,6 +22,7 @@ router.post("/register", createUser);
 router.post("/login", loginUser);
 router.get("/refresh", refresh);
 router.get("/verify/:id/:token", verifyEmail);
+router.post("/resendEmail", resendVerificationEmail);
 router.get(
   "/getAllUsers",
   authenticateToken,

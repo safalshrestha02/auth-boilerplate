@@ -13,6 +13,8 @@ const Token = new Schema({
     type: String,
     required: true,
   },
+  createdAt: { type: Date },
+  expiresAt: { type: Date },
 });
 
 module.exports = mongoose.model("Token", Token);
