@@ -3,7 +3,6 @@ const {
   authenticateToken,
   checkUserRole,
 } = require("../../middlewares/authenticate");
-// const { verifyEmailToken } = require("../../middlewares/verifyToken");
 const {
   getAllUser,
   loginUser,
@@ -22,11 +21,7 @@ const router = Router();
 router.post("/register", createUser);
 router.post("/login", loginUser);
 router.get("/refresh", refresh);
-router.get(
-  "/verify/:id/:token",
-  // verifyEmailToken,
-  verifyEmail
-);
+router.get("/verify/:id/:token", verifyEmail);
 router.post("/resendEmail", resendVerificationEmail);
 router.get(
   "/getAllUsers",

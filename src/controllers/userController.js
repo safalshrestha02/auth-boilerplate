@@ -2,7 +2,6 @@ const User = require("../models/User");
 const Token = require("../models/Token");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../services/sendMail");
-const crypto = require("crypto");
 require("dotenv").config;
 // Will contain all the user controllers like Create, Edit, Delete
 

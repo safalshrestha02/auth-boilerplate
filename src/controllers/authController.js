@@ -1,7 +1,6 @@
 const User = require("../models/User");
 const Token = require("../models/Token");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 const sendEmail = require("../services/sendMail");
 require("dotenv").config;
 const {
@@ -36,6 +35,7 @@ const refreshOptions = {
 async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
+
     // Validate email and password
     if (!email || !password) {
       res.json({ error: "enter your credentials" });
@@ -53,6 +53,7 @@ async function loginUser(req, res, next) {
       res.json("please verify yopur email first");
     } else {
       const isMatch = await user.matchPassword(password);
+
       if (!isMatch) {
         res.status(401).json({ error: "invalid credentials" });
       }
@@ -136,12 +137,14 @@ async function refresh(req, res, next) {
 async function verifyEmail(req, res, next) {
   try {
     const user = await User.findOne({ _id: req.params.id });
+
     if (!user) return res.status(400).send("Invalid link");
 
     const token = await Token.findOne({
       userId: user._id,
       token: req.params.token,
     });
+
     if (!token) return res.status(400).send("Invalid link");
 
     await User.updateOne({ _id: user._id, isVerified: true });
@@ -160,9 +163,11 @@ async function verifyEmail(req, res, next) {
 async function resendVerificationEmail(req, res, next) {
   try {
     const user = await User.findOne({ email: req.body.email });
+
     if (!user) {
       res.status(400).send("User doesnot exists");
     }
+
     if (user.isVerified === true) {
       res.status(400).send("User already exists");
     } else {
